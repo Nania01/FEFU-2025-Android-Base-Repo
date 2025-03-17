@@ -1,47 +1,38 @@
 package co.feip.fefu2025
 
+import android.graphics.Color
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import co.feip.fefu2025.ui.theme.FEFU2025AndroidBaseRepoTheme
+import android.widget.Button
+import androidx.appcompat.app.AppCompatActivity
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
+
+    private val genres = listOf(
+        "Комедия" to Color.parseColor("#F44336"),
+        "Повседневность" to Color.parseColor("#E91E63"),
+        "Музыка" to Color.parseColor("#9C27B0"),
+        "Школа" to Color.parseColor("#3F51B5"),
+        "Дружба" to Color.parseColor("#2196F3"),
+        "Фэнтези" to Color.parseColor("#009688"),
+        "История" to Color.parseColor("#4CAF50"),
+        "Приключения" to Color.parseColor("#FF9800"),
+        "Романтика" to Color.parseColor("#FF5722"),
+        "Ужасы" to Color.parseColor("#795548")
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            FEFU2025AndroidBaseRepoTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "FEIP",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+        setContentView(R.layout.activity_main)
+
+        val addButton = findViewById<Button>(R.id.addButton)
+        val flexLayout = findViewById<FlexBoxLayout>(R.id.flexLayout)
+
+        addButton.setOnClickListener {
+            val (name, color) = genres.random()
+            val genreView = AnimeGenreView(this)
+            genreView.setGenreName(name)
+            genreView.setGenreBackgroundColor(color)
+            flexLayout.addView(genreView)
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    FEFU2025AndroidBaseRepoTheme {
-        Greeting("Android")
     }
 }
