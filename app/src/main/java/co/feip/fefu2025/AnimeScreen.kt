@@ -3,6 +3,8 @@ package co.feip.fefu2025
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -23,6 +25,9 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import co.feip.fefu2025.RatingBarChart
+import co.feip.fefu2025.AnimeCard
+
 @Composable
 fun AnimeScreen(
     image: Painter,
@@ -31,7 +36,9 @@ fun AnimeScreen(
     genres: List<String>,
     episodesInfo: String,
     rating: String,
-    description: String
+    description: String,
+    ratings: Map<Int, Int>,
+    recommendations: List<RecommendationAnime>
 ) {
     val scrollState = rememberScrollState()
 
@@ -127,10 +134,57 @@ fun AnimeScreen(
 
             DescriptionBlock(description = description)
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Распределение оценок",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 8.dp, bottom = 4.dp),
+                color = Color.Black
+            )
+
+            RatingBarChart(ratings = ratings)
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "Вам может понравиться:",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 8.dp, bottom = 4.dp),
+                color = Color.Black
+            )
+
+            LazyRow(
+                contentPadding = PaddingValues(start = 4.dp, end = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                items(recommendations) { anime ->
+                    AnimeCard(
+                        title = anime.title,
+                        rating = anime.rating,
+                        genres = anime.genres,
+                        image = anime.image
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
+
+data class RecommendationAnime(
+    val title: String,
+    val rating: String,
+    val genres: List<String>,
+    val image: Painter
+)
 
 @Composable
 fun StatBlock(
@@ -254,6 +308,30 @@ fun PreviewAnimeScreen() {
         ),
         episodesInfo = "1 сезон, 12 серий",
         rating = "8.8",
-        description = "Уже полгода прошло с того момента, как 17-летнюю Маомао похитили и заставили трудиться в императорском дворце обычной служанкой. Работа тяжёлая, но девушка решила не сдаваться, не унывать и честно вкалывать, пока её не отпустят на покой. Планы изменились, когда до Маомао дошли вести о том, что детей императора одолел серьёзный недуг. Девушка решила тайком попробовать разобраться и помочь, рассчитывая на свой опыт в фармацевтике, которой она занималась раньше, когда проживала в Квартале красных фонарей.\n\nНесмотря на то, что Маомао не хотела привлекать к себе внимания, её вмешательство и талант не остались незамеченными. Вскоре Маомао оказалась вхожа во внутренние покои и вступила в круг приближённых императора. Благодаря своим знаниям и эксцентричному характеру Маомао произведёт фурор во дворце!"
+        description = "Уже полгода прошло с того момента, как 17-летнюю Маомао похитили и заставили трудиться в императорском дворце обычной служанкой. Работа тяжёлая, но девушка решила не сдаваться, не унывать и честно вкалывать, пока её не отпустят на покой. Планы изменились, когда до Маомао дошли вести о том, что детей императора одолел серьёзный недуг. Девушка решила тайком попробовать разобраться и помочь, рассчитывая на свой опыт в фармацевтике, которой она занималась раньше, когда проживала в Квартале красных фонарей.\n\nНесмотря на то, что Маомао не хотела привлекать к себе внимания, её вмешательство и талант не остались незамеченными. Вскоре Маомао оказалась вхожа во внутренние покои и вступила в круг приближённых императора. Благодаря своим знаниям и эксцентричному характеру Маомао произведёт фурор во дворце!",
+        ratings = mapOf(
+            1 to 100,
+            2 to 50,
+            3 to 200,
+            4 to 150,
+            5 to 300,
+            6 to 250,
+            7 to 400,
+            8 to 350,
+            9 to 450,
+            10 to 500
+        ),
+        recommendations = listOf(
+            RecommendationAnime("Атака титанов", "8.6", listOf("Экшен", "Драма", "Сёнен", "Триллер", "Военное"), painterResource(id = R.drawable.attack_titan)),
+            RecommendationAnime("Клинок, рассекающий демонов", "8.4", listOf("Экшен", "Сёнен", "Фэнтези", "Сверхестественное"), painterResource(id = R.drawable.demon_slayer)),
+            RecommendationAnime("Магическая битва", "8.6", listOf("Экшен", "Сёнен", "Школа", "Сверхестественное"), painterResource(id = R.drawable.jujutsu_kaisen)),
+            RecommendationAnime("Восемьдесят шесть", "8.3", listOf("Экшен", "Военное", "Меха", "Фантастика", "Драма"), painterResource(id = R.drawable.eighty_six)),
+            RecommendationAnime("Мастера меча онлайн", "7.2", listOf("Экшен", "Видеоигры", "Фэнтези", "Романтика", "Приключения"), painterResource(id = R.drawable.sword_online)),
+            RecommendationAnime("Человек-бензопила", "8.5", listOf("Экшен", "Сёнен", "Фэнтези", "Фантастика", "Сверхестественное"), painterResource(id = R.drawable.chainsaw_man)),
+            RecommendationAnime("Иллюзия рая", "8.2", listOf("Сёйнен", "Детектив", "Фантастика", "Приключения"), painterResource(id = R.drawable.tengoku_daimakyou)),
+            RecommendationAnime("Токийские мстители", "7.9", listOf("Экшен", "Драма", "Сёнен", "Мужики дерутся"), painterResource(id = R.drawable.tokyo_revengers)),
+            RecommendationAnime("Бездомный бог", "7.9", listOf("Экшен", "Демоны", "Сёнен", "Сверхестественное"), painterResource(id = R.drawable.noragami)),
+            RecommendationAnime("Вайолет Эвергарден", "8.7", listOf("Драма", "Военное", "Романтика"), painterResource(id = R.drawable.violet_evergarden))
+        )
     )
 }
