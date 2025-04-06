@@ -169,7 +169,8 @@ fun AnimeScreen(
                         title = anime.title,
                         rating = anime.rating,
                         genres = anime.genres,
-                        image = anime.image
+                        image = anime.image,
+                        modifier = Modifier.width(200.dp)
                     )
                 }
             }
