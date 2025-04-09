@@ -2,6 +2,7 @@ package co.feip.fefu2025
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -10,36 +11,48 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
+import androidx.lifecycle.viewmodel.compose.viewModel
+import co.feip.fefu2025.presentation.detail.AnimeDetailViewModel
 import co.feip.fefu2025.RatingBarChart
 import co.feip.fefu2025.AnimeCard
+import co.feip.fefu2025.domain.model.Anime
 
 @Composable
 fun AnimeScreen(
-    image: Painter,
-    title: String,
-    info: String,
-    genres: List<String>,
-    episodesInfo: String,
-    rating: String,
-    description: String,
-    ratings: Map<Int, Int>,
-    recommendations: List<RecommendationAnime>
+    animeId: Int,
+    viewModelFactory: AnimeDetailViewModel.Factory,
+    onAnimeClick: (Int) -> Unit
 ) {
+    val viewModel: AnimeDetailViewModel = viewModel(factory = viewModelFactory)
+    val anime by viewModel.anime
+
+    if (anime != null) {
+        AnimeScreenContent(anime!!, onAnimeClick)
+    } else {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Загрузка...")
+        }
+    }
+}
+
+@Composable
+fun AnimeScreenContent(anime: Anime, onAnimeClick: (Int) -> Unit) {
     val scrollState = rememberScrollState()
 
     Column(
@@ -61,7 +74,7 @@ fun AnimeScreen(
                 .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
         ) {
             Image(
-                painter = image,
+                painter = painterResource(id = anime.imageResId),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
@@ -77,35 +90,36 @@ fun AnimeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             val fontSize: TextUnit = when {
-                title.length <= 10 -> 30.sp
-                title.length <= 15 -> 26.sp
-                title.length <= 25 -> 22.sp
+                anime.title.length <= 10 -> 30.sp
+                anime.title.length <= 15 -> 26.sp
+                anime.title.length <= 25 -> 22.sp
                 else -> 20.sp
             }
 
             Text(
-                text = title,
+                text = anime.title,
                 fontSize = fontSize,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,
                 textAlign = TextAlign.Center,
-                letterSpacing = 0.5.sp,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp, bottom = 4.dp)
             )
 
-            Text(
-                text = info,
-                fontSize = 14.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 10.dp)
-            )
+            anime.info?.let {
+                Text(
+                    text = it,
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 10.dp)
+                )
+            }
 
-            GenreTagsFull(genres = genres)
+            GenreTagsFull(genres = anime.genres)
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -118,13 +132,13 @@ fun AnimeScreen(
             ) {
                 StatBlock(
                     label = "Сезоны и серии",
-                    value = episodesInfo,
+                    value = anime.episodesInfo ?: "Неизвестно",
                     backgroundColor = Color(0xFFE0F2F1),
                     modifier = Modifier.weight(1f)
                 )
                 StatBlock(
                     label = "Рейтинг аниме",
-                    value = "$rating из 10",
+                    value = "${anime.rating} из 10",
                     backgroundColor = Color(0xFFFFF4E1),
                     modifier = Modifier.weight(1f)
                 )
@@ -132,45 +146,51 @@ fun AnimeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            DescriptionBlock(description = description)
+            anime.description?.let { DescriptionBlock(it) }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "Распределение оценок",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 8.dp, bottom = 4.dp),
-                color = Color.Black
-            )
-
-            RatingBarChart(ratings = ratings)
+            anime.ratings?.let {
+                Text(
+                    text = "Распределение оценок",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp, bottom = 4.dp),
+                    color = Color.Black
+                )
+                RatingBarChart(ratings = it)
+            }
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            Text(
-                text = "Вам может понравиться:",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 8.dp, bottom = 4.dp),
-                color = Color.Black
-            )
+            anime.recommendations?.let {
+                Text(
+                    text = "Вам может понравиться:",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp, bottom = 4.dp),
+                    color = Color.Black
+                )
 
-            LazyRow(
-                contentPadding = PaddingValues(start = 4.dp, end = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                items(recommendations) { anime ->
-                    AnimeCard(
-                        title = anime.title,
-                        rating = anime.rating,
-                        genres = anime.genres,
-                        image = anime.image
-                    )
+                LazyRow(
+                    contentPadding = PaddingValues(start = 4.dp, end = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    items(it) { rec ->
+                        AnimeCard(
+                            title = rec.title,
+                            rating = rec.rating,
+                            genres = rec.genres,
+                            image = painterResource(id = rec.imageResId),
+                            modifier = Modifier
+                                .width(200.dp)
+                                .clickable { onAnimeClick(rec.id) }
+                        )
+                    }
                 }
             }
 
@@ -178,13 +198,6 @@ fun AnimeScreen(
         }
     }
 }
-
-data class RecommendationAnime(
-    val title: String,
-    val rating: String,
-    val genres: List<String>,
-    val image: Painter
-)
 
 @Composable
 fun StatBlock(
@@ -293,45 +306,4 @@ fun DescriptionBlock(description: String) {
             lineHeight = 20.sp
         )
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewAnimeScreen() {
-    AnimeScreen(
-        image = painterResource(id = R.drawable.monologue_pharmacist),
-        title = "Монолог фармацевта",
-        info = "2023, OLM Inc. (Oriental Light and Magic)",
-        genres = listOf(
-            "Драма", "Детектив", "Медицина", "Романтика",
-            "История", "Фэнтези", "Повседневность", "Сёнэн"
-        ),
-        episodesInfo = "1 сезон, 12 серий",
-        rating = "8.8",
-        description = "Уже полгода прошло с того момента, как 17-летнюю Маомао похитили и заставили трудиться в императорском дворце обычной служанкой. Работа тяжёлая, но девушка решила не сдаваться, не унывать и честно вкалывать, пока её не отпустят на покой. Планы изменились, когда до Маомао дошли вести о том, что детей императора одолел серьёзный недуг. Девушка решила тайком попробовать разобраться и помочь, рассчитывая на свой опыт в фармацевтике, которой она занималась раньше, когда проживала в Квартале красных фонарей.\n\nНесмотря на то, что Маомао не хотела привлекать к себе внимания, её вмешательство и талант не остались незамеченными. Вскоре Маомао оказалась вхожа во внутренние покои и вступила в круг приближённых императора. Благодаря своим знаниям и эксцентричному характеру Маомао произведёт фурор во дворце!",
-        ratings = mapOf(
-            1 to 100,
-            2 to 50,
-            3 to 200,
-            4 to 150,
-            5 to 300,
-            6 to 250,
-            7 to 400,
-            8 to 350,
-            9 to 450,
-            10 to 500
-        ),
-        recommendations = listOf(
-            RecommendationAnime("Атака титанов", "8.6", listOf("Экшен", "Драма", "Сёнен", "Триллер", "Военное"), painterResource(id = R.drawable.attack_titan)),
-            RecommendationAnime("Клинок, рассекающий демонов", "8.4", listOf("Экшен", "Сёнен", "Фэнтези", "Сверхестественное"), painterResource(id = R.drawable.demon_slayer)),
-            RecommendationAnime("Магическая битва", "8.6", listOf("Экшен", "Сёнен", "Школа", "Сверхестественное"), painterResource(id = R.drawable.jujutsu_kaisen)),
-            RecommendationAnime("Восемьдесят шесть", "8.3", listOf("Экшен", "Военное", "Меха", "Фантастика", "Драма"), painterResource(id = R.drawable.eighty_six)),
-            RecommendationAnime("Мастера меча онлайн", "7.2", listOf("Экшен", "Видеоигры", "Фэнтези", "Романтика", "Приключения"), painterResource(id = R.drawable.sword_online)),
-            RecommendationAnime("Человек-бензопила", "8.5", listOf("Экшен", "Сёнен", "Фэнтези", "Фантастика", "Сверхестественное"), painterResource(id = R.drawable.chainsaw_man)),
-            RecommendationAnime("Иллюзия рая", "8.2", listOf("Сёйнен", "Детектив", "Фантастика", "Приключения"), painterResource(id = R.drawable.tengoku_daimakyou)),
-            RecommendationAnime("Токийские мстители", "7.9", listOf("Экшен", "Драма", "Сёнен", "Мужики дерутся"), painterResource(id = R.drawable.tokyo_revengers)),
-            RecommendationAnime("Бездомный бог", "7.9", listOf("Экшен", "Демоны", "Сёнен", "Сверхестественное"), painterResource(id = R.drawable.noragami)),
-            RecommendationAnime("Вайолет Эвергарден", "8.7", listOf("Драма", "Военное", "Романтика"), painterResource(id = R.drawable.violet_evergarden))
-        )
-    )
 }

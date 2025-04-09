@@ -12,12 +12,15 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.Dp
+import androidx.compose.runtime.*
 
 @Composable
 fun AnimeCard(
@@ -27,31 +30,23 @@ fun AnimeCard(
     image: Painter,
     modifier: Modifier = Modifier
 ) {
-    val fontSize = when {
-        title.length <= 10 -> 16.sp
-        title.length <= 15 -> 14.sp
-        title.length <= 20 -> 12.sp
-        else -> 10.sp
-    }
-
     Card(
         modifier = modifier
-            .width(200.dp)
-            .height(285.dp)
             .padding(8.dp),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(4.dp),
-            verticalArrangement = Arrangement.Top
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(190.dp)
+                    .aspectRatio(0.9f)
                     .clip(RoundedCornerShape(12.dp))
             ) {
                 Image(
@@ -96,38 +91,39 @@ fun AnimeCard(
 
             Text(
                 text = title,
-                fontSize = fontSize,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
                 color = Color.Black,
-                modifier = Modifier.fillMaxWidth()
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth(0.9f)
             )
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            GenreTags(genres = genres)
+            GenreTags(
+                genres = genres,
+                maxWidth = 180.dp
+            )
         }
     }
 }
 
 @Composable
-fun GenreTags(genres: List<String>) {
-    val maxLines = 2
-    val rowWidth = 180.dp
+fun GenreTags(genres: List<String>, maxWidth: Dp, maxLines: Int = 2) {
     val genreChunks = mutableListOf<List<String>>()
     var currentRow = mutableListOf<String>()
     var currentWidth = 0.dp
 
     genres.forEach { genre ->
         val genreWidth = (genre.length * 7.5).dp + 12.dp
-
-        if (currentWidth + genreWidth > rowWidth) {
+        if (currentWidth + genreWidth > maxWidth) {
             genreChunks.add(currentRow)
             currentRow = mutableListOf()
             currentWidth = 0.dp
             if (genreChunks.size >= maxLines) return@forEach
         }
-
         currentRow.add(genre)
         currentWidth += genreWidth
     }
@@ -137,13 +133,14 @@ fun GenreTags(genres: List<String>) {
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        modifier = Modifier.width(maxWidth),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         genreChunks.forEach { rowGenres ->
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 rowGenres.forEach { genre ->
                     Box(
@@ -170,9 +167,10 @@ fun GenreTags(genres: List<String>) {
 @Composable
 fun PreviewAnimeCard() {
     AnimeCard(
-        title = "Монолог фармацевта",
+        title = "Монолог фармацевта, который немного слишком длинный",
         rating = "8.8",
-        genres = listOf("Драма", "Детектив", "История", "Медицина"),
-        image = painterResource(id = R.drawable.monologue_pharmacist)
+        genres = listOf("Драма", "Детектив", "История", "Медицина", "Фэнтези", "Сёдзё", "Сэйнэн"),
+        image = painterResource(id = R.drawable.monologue_pharmacist),
+        modifier = Modifier.width(200.dp)
     )
 }
