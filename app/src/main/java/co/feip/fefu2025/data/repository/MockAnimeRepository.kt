@@ -6,7 +6,11 @@ import co.feip.fefu2025.domain.repository.AnimeRepository
 
 class MockAnimeRepository : AnimeRepository {
 
-    private val globalRecommendationIds = listOf(2, 3, 4)
+    private val globalRecommendationIds = listOf(2, 3, 4, 5, 6, 7, 8, 9)
+
+    fun getGlobalRecommendations(): List<Anime> {
+        return animeList.filter { it.id in globalRecommendationIds }
+    }
 
     private val animeList = listOf(
         Anime(
@@ -141,7 +145,7 @@ class MockAnimeRepository : AnimeRepository {
         val recommendations = globalRecommendationIds
             .filter { it != id }
             .mapNotNull { rid -> animeList.find { it.id == rid } }
-            .take(5)
+            .take(10)
 
         return anime?.copy(recommendations = recommendations)
     }

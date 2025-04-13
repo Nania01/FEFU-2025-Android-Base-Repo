@@ -1,6 +1,7 @@
 package co.feip.fefu2025
 
 import androidx.compose.foundation.Image
+import androidx.compose.runtime.remember
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,6 +15,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -34,13 +40,14 @@ import co.feip.fefu2025.domain.model.Anime
 fun AnimeScreen(
     animeId: Int,
     viewModelFactory: AnimeDetailViewModel.Factory,
-    onAnimeClick: (Int) -> Unit
+    onAnimeClick: (Int) -> Unit,
+    onRecommendationsClick: () -> Unit
 ) {
     val viewModel: AnimeDetailViewModel = viewModel(factory = viewModelFactory)
     val anime by viewModel.anime
 
     if (anime != null) {
-        AnimeScreenContent(anime!!, onAnimeClick)
+        AnimeScreenContent(anime!!, onAnimeClick, onRecommendationsClick)
     } else {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -52,7 +59,11 @@ fun AnimeScreen(
 }
 
 @Composable
-fun AnimeScreenContent(anime: Anime, onAnimeClick: (Int) -> Unit) {
+fun AnimeScreenContent(
+    anime: Anime,
+    onAnimeClick: (Int) -> Unit,
+    onRecommendationsClick: () -> Unit
+) {
     val scrollState = rememberScrollState()
 
     Column(
@@ -165,22 +176,45 @@ fun AnimeScreenContent(anime: Anime, onAnimeClick: (Int) -> Unit) {
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            anime.recommendations?.let {
-                Text(
-                    text = "Вам может понравиться:",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
+            anime.recommendations?.let { recommendations ->
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 8.dp, bottom = 4.dp),
-                    color = Color.Black
-                )
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Вам может понравиться:",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = rememberRipple(bounded = true, color = Color(0x22000000)),
+                                onClick = onRecommendationsClick
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowForward,
+                            contentDescription = "Открыть все рекомендации",
+                            tint = Color.Black
+                        )
+                    }
+                }
 
                 LazyRow(
                     contentPadding = PaddingValues(start = 4.dp, end = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    items(it) { rec ->
+                    items(recommendations) { rec ->
                         AnimeCard(
                             title = rec.title,
                             rating = rec.rating,

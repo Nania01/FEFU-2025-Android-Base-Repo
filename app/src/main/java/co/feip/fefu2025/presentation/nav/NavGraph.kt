@@ -6,8 +6,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import co.feip.fefu2025.MainScreen
 import co.feip.fefu2025.AnimeScreen
+import co.feip.fefu2025.RecommendationListScreen
 import co.feip.fefu2025.data.repository.MockAnimeRepository
 import co.feip.fefu2025.domain.usecase.GetAnimeDetailUseCase
 import co.feip.fefu2025.domain.usecase.GetAnimeListUseCase
@@ -41,13 +43,26 @@ fun AppNavGraph(modifier: Modifier = Modifier) {
 
         composable(
             route = "anime/{animeId}",
-            arguments = listOf(navArgument("animeId") { type = NavType.IntType })
+            arguments = listOf(navArgument("animeId") { type = NavType.IntType }),
+            deepLinks = listOf(
+                navDeepLink {
+                    uriPattern = "mysuperapp://anime/{animeId}"
+                }
+            )
         ) { backStackEntry ->
             val animeId = backStackEntry.arguments?.getInt("animeId") ?: return@composable
             val detailViewModelFactory = AnimeDetailViewModel.Factory(detailUseCase, animeId)
             AnimeScreen(
                 animeId = animeId,
                 viewModelFactory = detailViewModelFactory,
+                onAnimeClick = { id -> navController.navigate("anime/$id") },
+                onRecommendationsClick = { navController.navigate("recommendations") }
+            )
+        }
+
+        composable("recommendations") {
+            RecommendationListScreen(
+                onBackClick = { navController.popBackStack() },
                 onAnimeClick = { id -> navController.navigate("anime/$id") }
             )
         }
