@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -19,6 +20,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import co.feip.fefu2025.presentation.common.AnimeUiState
 import co.feip.fefu2025.presentation.main.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,7 +30,7 @@ fun MainScreen(
     onAnimeClick: (Int) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
-    val animeList = viewModel.animeList
+    val state = viewModel.uiState
 
     Column(
         modifier = Modifier
@@ -69,22 +71,56 @@ fun MainScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(animeList) { anime ->
-                AnimeCard(
-                    title = anime.title,
-                    rating = anime.rating,
-                    genres = anime.genres,
-                    image = painterResource(id = anime.imageResId),
-                    modifier = Modifier
-                        .clickable { onAnimeClick(anime.id) }
-                )
+        when (state) {
+            is AnimeUiState.Loading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFF4CAF50))
+                }
+            }
+
+            is AnimeUiState.Error -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "Ошибка: не удалось загрузить список аниме",
+                            color = Color.Red
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = { viewModel.loadAnime() },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                        ) {
+                            Text("Повторить")
+                        }
+                    }
+                }
+            }
+
+            is AnimeUiState.Success -> {
+                val animeList = state.animeList
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    contentPadding = PaddingValues(bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(animeList) { anime ->
+                        AnimeCard(
+                            title = anime.title,
+                            rating = anime.rating,
+                            genres = anime.genres,
+                            image = painterResource(id = anime.imageResId),
+                            modifier = Modifier.clickable { onAnimeClick(anime.id) }
+                        )
+                    }
+                }
             }
         }
     }

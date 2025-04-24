@@ -3,6 +3,8 @@ package co.feip.fefu2025.data.repository
 import co.feip.fefu2025.R
 import co.feip.fefu2025.domain.model.Anime
 import co.feip.fefu2025.domain.repository.AnimeRepository
+import kotlinx.coroutines.delay
+import kotlin.random.Random
 
 class MockAnimeRepository : AnimeRepository {
 
@@ -137,15 +139,26 @@ class MockAnimeRepository : AnimeRepository {
         )
     )
 
-    override fun getAnimeList(): List<Anime> = animeList
+    override suspend fun getAnimeList(): List<Anime> {
+        delay(3000)
+        if (Random.nextBoolean()) {
+            throw RuntimeException("Ошибка загрузки списка аниме")
+        }
+        return animeList
+    }
 
-    override fun getAnimeById(id: Int): Anime? {
+    override suspend fun getAnimeById(id: Int): Anime? {
+        delay(2000)
         val anime = animeList.find { it.id == id }
 
         val recommendations = globalRecommendationIds
             .filter { it != id }
             .mapNotNull { rid -> animeList.find { it.id == rid } }
             .take(10)
+
+        if (Random.nextBoolean()) {
+            throw RuntimeException("Ошибка загрузки деталей аниме")
+        }
 
         return anime?.copy(recommendations = recommendations)
     }
