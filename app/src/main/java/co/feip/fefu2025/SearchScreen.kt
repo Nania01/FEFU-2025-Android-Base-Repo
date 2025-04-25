@@ -40,7 +40,6 @@ fun SearchScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // Верхняя плашка как в RecommendationListScreen
         TopAppBar(
             title = { Text("Поиск", fontSize = 20.sp) },
             navigationIcon = {
@@ -50,7 +49,6 @@ fun SearchScreen(
             }
         )
 
-        // Закруглённое поле поиска
         OutlinedTextField(
             value = query,
             onValueChange = { query = it },
