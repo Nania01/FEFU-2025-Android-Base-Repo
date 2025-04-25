@@ -6,7 +6,9 @@ import co.feip.fefu2025.domain.repository.AnimeRepository
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-class MockAnimeRepository : AnimeRepository {
+class MockAnimeRepository(
+    var failEnabled: Boolean = true
+) : AnimeRepository {
 
     private val globalRecommendationIds = listOf(2, 3, 4, 5, 6, 7, 8, 9)
 
@@ -140,8 +142,8 @@ class MockAnimeRepository : AnimeRepository {
     )
 
     override suspend fun getAnimeList(): List<Anime> {
-        delay(3000)
-        if (Random.nextBoolean()) {
+        delay(300)
+        if (failEnabled && Random.nextBoolean()) {
             throw RuntimeException("Ошибка загрузки списка аниме")
         }
         return animeList
@@ -149,16 +151,17 @@ class MockAnimeRepository : AnimeRepository {
 
     override suspend fun getAnimeById(id: Int): Anime? {
         delay(2000)
+
+        if (failEnabled && Random.nextBoolean()) {
+            throw RuntimeException("Ошибка загрузки деталей аниме")
+        }
+
         val anime = animeList.find { it.id == id }
 
         val recommendations = globalRecommendationIds
             .filter { it != id }
             .mapNotNull { rid -> animeList.find { it.id == rid } }
             .take(10)
-
-        if (Random.nextBoolean()) {
-            throw RuntimeException("Ошибка загрузки деталей аниме")
-        }
 
         return anime?.copy(recommendations = recommendations)
     }

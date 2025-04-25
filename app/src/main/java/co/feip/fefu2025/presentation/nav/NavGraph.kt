@@ -7,24 +7,28 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
-import co.feip.fefu2025.MainScreen
-import co.feip.fefu2025.AnimeScreen
-import co.feip.fefu2025.RecommendationListScreen
+import co.feip.fefu2025.*
 import co.feip.fefu2025.data.repository.MockAnimeRepository
 import co.feip.fefu2025.domain.usecase.GetAnimeDetailUseCase
 import co.feip.fefu2025.domain.usecase.GetAnimeListUseCase
 import co.feip.fefu2025.presentation.main.MainViewModel
 import co.feip.fefu2025.presentation.detail.AnimeDetailViewModel
+import co.feip.fefu2025.presentation.search.SearchViewModel
 
 @Composable
 fun AppNavGraph(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
 
-    val repository = MockAnimeRepository()
+    val repository = MockAnimeRepository(failEnabled = true)
+
+    val safeRepository = MockAnimeRepository(failEnabled = false)
+
     val listUseCase = GetAnimeListUseCase(repository)
     val detailUseCase = GetAnimeDetailUseCase(repository)
-
     val mainViewModelFactory = MainViewModel.Factory(listUseCase)
+
+    val searchUseCase = GetAnimeListUseCase(safeRepository)
+    val searchViewModelFactory = SearchViewModel.Factory(searchUseCase)
 
     NavHost(
         navController = navController,
@@ -37,6 +41,9 @@ fun AppNavGraph(modifier: Modifier = Modifier) {
                 viewModel = mainViewModel,
                 onAnimeClick = { animeId ->
                     navController.navigate("anime/$animeId")
+                },
+                onSearchClick = {
+                    navController.navigate("search")
                 }
             )
         }
@@ -62,6 +69,14 @@ fun AppNavGraph(modifier: Modifier = Modifier) {
 
         composable("recommendations") {
             RecommendationListScreen(
+                onBackClick = { navController.popBackStack() },
+                onAnimeClick = { id -> navController.navigate("anime/$id") }
+            )
+        }
+
+        composable("search") {
+            SearchScreen(
+                viewModelFactory = searchViewModelFactory,
                 onBackClick = { navController.popBackStack() },
                 onAnimeClick = { id -> navController.navigate("anime/$id") }
             )
