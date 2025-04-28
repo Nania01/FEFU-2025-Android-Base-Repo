@@ -3,21 +3,28 @@ package co.feip.fefu2025
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import co.feip.fefu2025.presentation.common.AnimeUiState
 import co.feip.fefu2025.presentation.search.SearchViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,9 +38,8 @@ fun SearchScreen(
     var query by remember { mutableStateOf("") }
     val state by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(query) {
-        viewModel.search(query)
-    }
+    val coroutineScope = rememberCoroutineScope()
+    var searchJob by remember { mutableStateOf<Job?>(null) }
 
     Column(
         modifier = Modifier
@@ -51,7 +57,16 @@ fun SearchScreen(
 
         OutlinedTextField(
             value = query,
-            onValueChange = { query = it },
+            onValueChange = {
+                query = it
+
+                searchJob?.cancel()
+
+                searchJob = coroutineScope.launch {
+                    delay(600)
+                    viewModel.search(query)
+                }
+            },
             placeholder = { Text("Введите название или студию", fontSize = 14.sp) },
             trailingIcon = {
                 Icon(

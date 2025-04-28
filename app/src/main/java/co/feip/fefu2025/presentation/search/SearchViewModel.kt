@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import co.feip.fefu2025.domain.usecase.GetAnimeListUseCase
 import co.feip.fefu2025.presentation.common.AnimeUiState
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -25,15 +24,17 @@ class SearchViewModel(
             }
 
             _uiState.value = AnimeUiState.Loading
-            delay(300)
 
-            val result = getAnimeListUseCase()
-            val filtered = result.filter {
-                it.title.contains(query, ignoreCase = true) ||
-                        it.info?.contains(query, ignoreCase = true) == true
+            try {
+                val result = getAnimeListUseCase()
+                val filtered = result.filter {
+                    it.title.contains(query, ignoreCase = true) ||
+                            (it.info?.contains(query, ignoreCase = true) == true)
+                }
+                _uiState.value = AnimeUiState.Success(filtered)
+            } catch (e: Exception) {
+                _uiState.value = AnimeUiState.Error("не удалось загрузить результаты поиска")
             }
-
-            _uiState.value = AnimeUiState.Success(filtered)
         }
     }
 
