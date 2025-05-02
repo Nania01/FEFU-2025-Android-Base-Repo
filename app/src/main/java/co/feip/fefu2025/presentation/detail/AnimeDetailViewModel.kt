@@ -1,20 +1,45 @@
 package co.feip.fefu2025.presentation.detail
 
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import co.feip.fefu2025.domain.model.Anime
 import co.feip.fefu2025.domain.usecase.GetAnimeDetailUseCase
+import kotlinx.coroutines.launch
+
+sealed class AnimeDetailUiState {
+    object Loading : AnimeDetailUiState()
+    data class Success(val anime: Anime) : AnimeDetailUiState()
+    data class Error(val message: String) : AnimeDetailUiState()
+}
 
 class AnimeDetailViewModel(
     private val getAnimeDetailUseCase: GetAnimeDetailUseCase,
-    animeId: Int
+    private val animeId: Int
 ) : ViewModel() {
 
-    val anime = mutableStateOf<Anime?>(null)
+    var uiState by mutableStateOf<AnimeDetailUiState>(AnimeDetailUiState.Loading)
+        private set
 
     init {
-        anime.value = getAnimeDetailUseCase(animeId)
+        loadDetail()
+    }
+
+    fun loadDetail() {
+        uiState = AnimeDetailUiState.Loading
+        viewModelScope.launch {
+            try {
+                val result = getAnimeDetailUseCase(animeId)
+                uiState = if (result != null) {
+                    AnimeDetailUiState.Success(result)
+                } else {
+                    AnimeDetailUiState.Error("Аниме не найдено")
+                }
+            } catch (e: Exception) {
+                uiState = AnimeDetailUiState.Error(e.message ?: "Ошибка загрузки")
+            }
+        }
     }
 
     class Factory(

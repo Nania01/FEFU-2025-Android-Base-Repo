@@ -2,16 +2,31 @@ package co.feip.fefu2025.presentation.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import co.feip.fefu2025.domain.model.Anime
+import androidx.lifecycle.viewModelScope
+import androidx.compose.runtime.*
 import co.feip.fefu2025.domain.usecase.GetAnimeListUseCase
+import co.feip.fefu2025.presentation.common.AnimeUiState
+import kotlinx.coroutines.launch
 
 class MainViewModel(private val getAnimeListUseCase: GetAnimeListUseCase) : ViewModel() {
-    val animeList: SnapshotStateList<Anime> = mutableStateListOf()
+
+    var uiState by mutableStateOf<AnimeUiState>(AnimeUiState.Loading)
+        private set
 
     init {
-        animeList.addAll(getAnimeListUseCase())
+        loadAnime()
+    }
+
+    fun loadAnime() {
+        uiState = AnimeUiState.Loading
+        viewModelScope.launch {
+            try {
+                val result = getAnimeListUseCase()
+                uiState = AnimeUiState.Success(result)
+            } catch (e: Exception) {
+                uiState = AnimeUiState.Error("не удалось загрузить список аниме")
+            }
+        }
     }
 
     class Factory(private val useCase: GetAnimeListUseCase) : ViewModelProvider.Factory {
