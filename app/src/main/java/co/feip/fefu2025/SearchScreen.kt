@@ -22,9 +22,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import co.feip.fefu2025.presentation.common.AnimeUiState
 import co.feip.fefu2025.presentation.search.SearchViewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,12 +31,8 @@ fun SearchScreen(
     onAnimeClick: (Int) -> Unit
 ) {
     val viewModel: SearchViewModel = viewModel(factory = viewModelFactory)
-
-    var query by remember { mutableStateOf("") }
+    val query by viewModel.query.collectAsState()
     val state by viewModel.uiState.collectAsState()
-
-    val coroutineScope = rememberCoroutineScope()
-    var searchJob by remember { mutableStateOf<Job?>(null) }
 
     Column(
         modifier = Modifier
@@ -57,16 +50,7 @@ fun SearchScreen(
 
         OutlinedTextField(
             value = query,
-            onValueChange = {
-                query = it
-
-                searchJob?.cancel()
-
-                searchJob = coroutineScope.launch {
-                    delay(600)
-                    viewModel.search(query)
-                }
-            },
+            onValueChange = { viewModel.updateQuery(it) },
             placeholder = { Text("Введите название или студию", fontSize = 14.sp) },
             trailingIcon = {
                 Icon(
